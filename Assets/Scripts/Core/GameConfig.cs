@@ -28,8 +28,8 @@ public static class GameConfig
     // ---- 机动 ----
     public const float RunSpeed = 12f;         // 快跑速度（手感阶段可调）
     public const float WallRunSeconds = 3f;    // 跑墙时长（换墙/落地刷新）
-    public const float WallRunSpeedMult = 0.85f; // 跑墙沿墙速度倍率
-    public const float SlideSpeedMult = 1.1f;  // 滑铲速度倍率（略快于跑步）
+    public const float WallRunSpeedMult = 1.4f; // 跑墙沿墙速度倍率（快于跑步，加速机动）
+    public const float SlideSpeedMult = 1.3f;  // 滑铲速度倍率（比跑步快）
     public const float SlideDuration = 0.8f;   // 滑铲时长
     public const float JumpHeight = 2f;        // 跳跃高度（非核心）
 
