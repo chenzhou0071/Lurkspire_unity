@@ -36,8 +36,9 @@ public class PlayerInput : MonoBehaviour
             if (kb.dKey.isPressed) move.x += 1;
         }
 
-        // ---- 滑铲（C 键点按启动，0.8s 自动结束；Shift 留给冲刺斩） ----
-        if (kb != null && kb.cKey.wasPressedThisFrame)
+        // ---- 滑铲（C 键点按启动，仅落地可用、跑墙中禁止——防空中/跑墙边界冲突） ----
+        if (kb != null && kb.cKey.wasPressedThisFrame
+            && _cc.isGrounded && !_wallRun.IsWallRunning)
             _motor.SetSlide(true);
         _motor.TickSlide(Time.deltaTime);
         _cc.height = Mathf.Lerp(_cc.height, _motor.IsSliding ? 0.6f : 2f, 12f * Time.deltaTime);
@@ -69,6 +70,8 @@ public class PlayerInput : MonoBehaviour
         bool wallRunning = _wallRun.IsWallRunning;
         if (grounded && wallRunning)
             _wallRun.Exit(); // 落地退出（下次上墙自动刷新 3 秒）
+        if (wallRunning && _motor.IsSliding)
+            _motor.SetSlide(false); // 上墙时强制退出滑铲（两状态不共存）
 
         // ---- 移动方向（跑墙：只有 W 沿墙切线前进；A/D/S 无效） ----
         // 跑墙跳出的动量优先保持，空中可混合操控微调落点（动量 0.7 + 输入 0.3）
