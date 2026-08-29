@@ -17,7 +17,13 @@ public class GameConfigTests
         Assert.AreEqual(0.5f, GameConfig.BlockDamageMult);  // 减伤 50%
         Assert.AreEqual(20, GameConfig.BlockGainOnHit);     // 砍人 +20
         Assert.AreEqual(3f, GameConfig.WallRunSeconds);     // 跑墙 3s
+        Assert.AreEqual(2.5f, GameConfig.WallJumpHeight);   // 跑墙跳高度（略低于普通跳）
         Assert.AreEqual(100, GameConfig.MaxHealth);         // 血量
         Assert.AreEqual(1f, GameConfig.SpawnInvulnSeconds); // 重生无敌
+        Assert.AreEqual(12f, GameConfig.WallJumpAwaySpeed); // 跑墙侧跳速度（弹射）
+        Assert.AreEqual(8f, GameConfig.WallJumpForwardSpeed); // 跑墙左前飞速度
+        Assert.AreEqual(0.3f, GameConfig.AirControlWeight); // 空中操控权重
+        Assert.AreEqual(1.6f, GameConfig.FallGravityMult); // 下落段重力倍率
+        Assert.AreEqual(60f, GameConfig.MaxFallSpeed);       // 下落速度上限
     }
 }

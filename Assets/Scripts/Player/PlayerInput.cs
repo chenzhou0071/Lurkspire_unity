@@ -2,19 +2,26 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // PlayerInput — 输入采集 + 角色驱动（新 Input System：Keyboard.current）
-// 挂载：玩家物体（需 CharacterController）
+// 机动链：快跑/跳跃/C 滑铲/跑墙（3 秒，换墙刷新，空格跳离）
+// 挂载：玩家物体（需 CharacterController，视觉胶囊为子物体）
 [RequireComponent(typeof(CharacterController))]
 public class PlayerInput : MonoBehaviour
 {
-    [SerializeField] private float gravity = -20f;
+    [SerializeField] private float gravity = -25f;
+    [SerializeField] private float wallDetectRange = 1.2f; // 跑墙检测距离（右侧）
     private CharacterController _cc;
     private PlayerMotor _motor;
+    private WallRun _wallRun;
     private Vector3 _velocity;
+    private Vector3 _lastWallNormal;
+    private Vector3 _jumpMomentum; // 跑墙跳的横向动量（落地清零，防止被方向覆盖）
+    private float _wallJumpCooldown; // 跳出冷却：期间禁止上任何墙（防跳出瞬间吸回墙）
 
     private void Awake()
     {
         _cc = GetComponent<CharacterController>();
         _motor = new PlayerMotor();
+        _wallRun = new WallRun();
     }
 
     private void Update()
@@ -29,11 +36,10 @@ public class PlayerInput : MonoBehaviour
             if (kb.dKey.isPressed) move.x += 1;
         }
 
-        // 滑铲：C 键【点按】启动（0.8 秒自动结束，不用按住；Shift 留给武士刀冲刺斩）
+        // ---- 滑铲（C 键点按启动，0.8s 自动结束；Shift 留给冲刺斩） ----
         if (kb != null && kb.cKey.wasPressedThisFrame)
             _motor.SetSlide(true);
         _motor.TickSlide(Time.deltaTime);
-        // 碰撞体压扁（CharacterController 高度不受 scale 影响，需独立设置）
         _cc.height = Mathf.Lerp(_cc.height, _motor.IsSliding ? 0.6f : 2f, 12f * Time.deltaTime);
         _cc.center = new Vector3(0, _cc.height / 2f, 0);
         // 视觉压扁（缩放根物体——原型阶段不做底部补偿，换正式建模后按模型调）
@@ -41,15 +47,93 @@ public class PlayerInput : MonoBehaviour
         float sy = Mathf.Lerp(transform.localScale.y, targetScaleY, 16f * Time.deltaTime);
         transform.localScale = new Vector3(1f, sy, 1f);
 
-        float speed = PlayerMotor.ComputeSpeed(false, _motor.IsSliding);
-        Vector3 dir = (transform.right * move.x + transform.forward * move.y).normalized;
-        _velocity.x = dir.x * speed;
-        _velocity.z = dir.z * speed;
-        _velocity.y += gravity * Time.deltaTime;
+        // ---- 跑墙检测（空中 + 左右侧有墙 + 按 W → 上墙） ----
+        // 跳出冷却期间禁止上墙（防跳出瞬间吸回）；冷却后允许换到不同方向的墙（墙间转移）
+        _wallJumpCooldown -= Time.deltaTime;
+        bool grounded = _cc.isGrounded;
+        bool wallHit = Physics.Raycast(transform.position, transform.right, out var hit, wallDetectRange);
+        if (!wallHit) // 右侧没墙 → 检测左侧
+            wallHit = Physics.Raycast(transform.position, -transform.right, out hit, wallDetectRange);
+        bool wPressed = kb != null && kb.wKey.isPressed;
+        if (!grounded && wallHit && wPressed && !_wallRun.IsWallRunning && _wallJumpCooldown <= 0f)
+        {
+            bool sameWall = _jumpMomentum.sqrMagnitude > 0f
+                && Vector3.Dot(hit.normal, _lastWallNormal) > 0.7f; // 法线夹角 <45° = 同一面墙
+            if (!sameWall)
+            {
+                _wallRun.Enter(hit.normal);
+                _lastWallNormal = hit.normal;
+            }
+        }
+        _wallRun.Tick(Time.deltaTime);
+        bool wallRunning = _wallRun.IsWallRunning;
+        if (grounded && wallRunning)
+            _wallRun.Exit(); // 落地退出（下次上墙自动刷新 3 秒）
 
-        // 跳（空格，落地才可跳）
-        if (kb != null && kb.spaceKey.wasPressedThisFrame && _cc.isGrounded)
-            _velocity.y = Mathf.Sqrt(GameConfig.JumpHeight * -2f * gravity);
+        // ---- 移动方向（跑墙：只有 W 沿墙切线前进；A/D/S 无效） ----
+        // 跑墙跳出的动量优先保持，空中可混合操控微调落点（动量 0.7 + 输入 0.3）
+        if (_jumpMomentum.sqrMagnitude > 0f)
+        {
+            Vector3 inputDir = (transform.right * move.x + transform.forward * move.y).normalized;
+            float keep = 1f - GameConfig.AirControlWeight;
+            _velocity.x = _jumpMomentum.x * keep + inputDir.x * GameConfig.RunSpeed * GameConfig.AirControlWeight;
+            _velocity.z = _jumpMomentum.z * keep + inputDir.z * GameConfig.RunSpeed * GameConfig.AirControlWeight;
+            if (grounded) _jumpMomentum = Vector3.zero; // 落地动量清零
+        }
+        else
+        {
+            float speed = PlayerMotor.ComputeSpeed(wallRunning, _motor.IsSliding);
+            Vector3 dir;
+            if (wallRunning)
+                dir = wPressed ? _wallRun.RunDirection(transform.forward) : Vector3.zero;
+            else
+                dir = (transform.right * move.x + transform.forward * move.y).normalized;
+            _velocity.x = dir.x * speed;
+            _velocity.z = dir.z * speed;
+        }
+
+        // ---- 跑墙倾斜：身体向墙反方向倾斜（右墙 → 左倾 -12；左墙 → 右倾 +12） ----
+        float tilt = wallRunning ? (_lastWallNormal.x >= 0 ? -12f : 12f) : 0f;
+        Quaternion targetRot = Quaternion.Euler(0, 0, tilt);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
+
+        // ---- 重力（跑墙：保留上升惯性缓慢衰减后锁高，绝不下坠——防贴地飞行） ----
+        float g;
+        if (wallRunning)
+        {
+            if (_velocity.y > 0f)
+                _velocity.y *= 0.96f; // 上升惯性保留（跳到墙上的动势），缓慢衰减自然停住
+            else
+                _velocity.y = 0f;     // 无上升速度 → 锁高
+            g = 0f;
+        }
+        else
+        {
+            g = gravity * (_velocity.y < 0f ? GameConfig.FallGravityMult : 1f);
+        }
+        _velocity.y += g * Time.deltaTime;
+        _velocity.y = Mathf.Max(_velocity.y, -GameConfig.MaxFallSpeed);
+
+        // ---- 跳（空格：跑墙中默认左上方跳 / W+空格左前方跳 / 落地起跳） ----
+        if (kb != null && kb.spaceKey.wasPressedThisFrame)
+        {
+            if (wallRunning)
+            {
+                // 跑墙跳：默认侧跳（离墙+蹬墙跳更高）；按住 W 加沿墙前冲（左前飞）
+                Vector3 jumpVel = _lastWallNormal * GameConfig.WallJumpAwaySpeed;
+                if (kb.wKey.isPressed)
+                    jumpVel += _wallRun.RunDirection(transform.forward) * GameConfig.WallJumpForwardSpeed;
+                jumpVel += Vector3.up * Mathf.Sqrt(GameConfig.WallJumpHeight * -2f * gravity);
+                _velocity = jumpVel;
+                _jumpMomentum = jumpVel; _jumpMomentum.y = 0f; // 记横向动量（落地清零）
+                _wallJumpCooldown = 0.2f; // 跳出冷却：0.2s 内禁止上任何墙（防瞬间吸回）
+                _wallRun.Exit(); // 跳离墙面（重新上墙刷新计时）
+            }
+            else if (grounded)
+            {
+                _velocity.y = Mathf.Sqrt(GameConfig.JumpHeight * -2f * gravity);
+            }
+        }
 
         _cc.Move(_velocity * Time.deltaTime);
     }
