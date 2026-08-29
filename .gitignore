@@ -53,3 +53,7 @@ Desktop.ini
 # Server build artifacts
 *.exe
 server/bin/
+
+# Unity batch test artifacts
+test-*.txt
+test-*.xml
