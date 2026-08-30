@@ -18,6 +18,7 @@ public static class GameConfig
     public const float SwordArcSeconds = 0.25f; // 挥砍前摇/冷却
     public const float DashAttackRange = 6f;   // 冲刺斩距离
     public const float DashAttackCooldown = 1.5f;
+    public const float DashAttackDuration = 0.2f; // 冲刺斩时长（平滑冲刺，非瞬移）
 
     // ---- 格挡 ----
     public const int BlockMax = 100;           // 格挡条上限

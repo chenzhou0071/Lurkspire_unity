@@ -119,6 +119,13 @@ public class GunView : MonoBehaviour
         }
     }
 
+    // 切枪显示控制（WeaponSwitch 调用：枪口是相机子物体，需显隐管理）
+    public void SetMuzzlesVisible(bool visible)
+    {
+        if (muzzleBlack != null) muzzleBlack.gameObject.SetActive(visible);
+        if (muzzleWhite != null) muzzleWhite.gameObject.SetActive(visible);
+    }
+
     // 瞄准：第一人称子弹方向 = 相机 forward（准星方向，含俯仰）
     // 之前用"水平面求交"——平视时射线与水平面平行无交点，导致开火无输出（bug 根因）
     private void FireRay(int shooter)
