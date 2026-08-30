@@ -8,7 +8,8 @@ using UnityEngine.InputSystem;
 public class PlayerInput : MonoBehaviour
 {
     [SerializeField] private float gravity = -25f;
-    [SerializeField] private float wallDetectRange = 1.2f; // 跑墙检测距离（右侧）
+    [SerializeField] private float wallDetectRange = 1.2f; // 跑墙检测距离（左右侧）
+    [SerializeField] private PlayerCamera fpsCamera; // 第一人称相机（倾斜转发；不拖则无倾斜）
     private CharacterController _cc;
     private PlayerMotor _motor;
     private WallRun _wallRun;
@@ -95,10 +96,12 @@ public class PlayerInput : MonoBehaviour
             _velocity.z = dir.z * speed;
         }
 
-        // ---- 跑墙倾斜：身体向墙反方向倾斜（右墙 → 左倾 -12；左墙 → 右倾 +12） ----
-        float tilt = wallRunning ? (_lastWallNormal.x >= 0 ? -12f : 12f) : 0f;
-        Quaternion targetRot = Quaternion.Euler(0, 0, tilt);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
+        // ---- 跑墙倾斜：按墙相对玩家的左右侧（法线·right > 0 = 墙在右 → 左倾） ----
+        if (fpsCamera != null)
+        {
+            float side = Vector3.Dot(_lastWallNormal, transform.right);
+            fpsCamera.SetTilt(wallRunning ? (side >= 0f ? -12f : 12f) : 0f);
+        }
 
         // ---- 重力（跑墙：保留上升惯性缓慢衰减后锁高，绝不下坠——防贴地飞行） ----
         float g;
