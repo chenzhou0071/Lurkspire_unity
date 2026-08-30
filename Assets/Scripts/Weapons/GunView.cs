@@ -87,7 +87,7 @@ public class GunView : MonoBehaviour
                 _charging = false;
                 if (_gun.TryLockOn(out int lockShooter))
                 {
-                    FireRay(lockShooter, 60f);
+                    FireRay(lockShooter, 60f, GameConfig.LockOnDamage); // 锁头：50 伤害必中一击
                     _flashTimer = 0.15f; // 锁头闪光更明显
                     _lastShooter = lockShooter;
                     _lockFlash = 0.6f;   // 锁头提示（枪口持续亮）
@@ -130,22 +130,26 @@ public class GunView : MonoBehaviour
     // 之前用"水平面求交"——平视时射线与水平面平行无交点，导致开火无输出（bug 根因）
     private void FireRay(int shooter)
     {
-        FireRay(shooter, 30f);
+        FireRay(shooter, 30f, GameConfig.GunDamage);
     }
 
-    private void FireRay(int shooter, float range)
+    // damage: 指定伤害（锁头传 LockOnDamage；默认调用走 GunDamage）
+    private void FireRay(int shooter, float range, int damage = 0)
     {
-        Vector3 dir = _cam.transform.forward;
         Transform muzzle = shooter == 0 ? muzzleBlack : muzzleWhite;
         Vector3 from = muzzle != null ? muzzle.position
             : _cam.transform.position + _cam.transform.forward * 0.5f;
-        from += dir * 0.3f; // 起点提前 0.3（防枪口在胶囊体内时火花被遮挡）
-        // 命中检测：射线找 Health 目标（靶子/敌人），命中造成伤害
+        from += _cam.transform.forward * 0.3f; // 起点提前（防被胶囊遮挡）
+        // 子弹方向：枪口 → 瞄准点（准星方向 range 处交点）——汇聚到准心，指哪打哪
+        Vector3 aimPoint = _cam.transform.position + _cam.transform.forward * range;
+        Vector3 dir = (aimPoint - from).normalized;
+        // 命中检测：沿子弹飞行线找 Health 目标
         if (Physics.Raycast(from, dir, out var hit, range))
         {
             var targetComp = hit.collider.GetComponentInParent<HealthComponent>();
             if (targetComp != null)
-                DamageSystem.ApplyHit(targetComp.Logic, GameConfig.GunDamage,
+                DamageSystem.ApplyHit(targetComp.Logic,
+                    damage > 0 ? damage : GameConfig.GunDamage,
                     hit.collider.GetComponentInParent<SwordView>()?.GetBlocker());
         }
         var color = shooter == 0 ? Color.black : Color.white; // 黑枪黑线 / 白枪白线

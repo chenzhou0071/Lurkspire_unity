@@ -46,7 +46,11 @@ public class SwordView : MonoBehaviour
         {
             _dashT += Time.deltaTime / GameConfig.DashAttackDuration;
             _cc.Move(_dashDir * (GameConfig.DashAttackRange / GameConfig.DashAttackDuration) * Time.deltaTime);
-            if (_dashT >= 1f) _dashing = false;
+            if (_dashT >= 1f)
+            {
+                _dashing = false;
+                RestoreCollisions(); // 冲刺结束：恢复与目标的碰撞
+            }
         }
 
         // ---- 刀姿态动画（优先级：挥砍 > 格挡 > 默认持刀） ----
@@ -91,7 +95,7 @@ public class SwordView : MonoBehaviour
         }
     }
 
-    // 冲刺斩：沿相机朝向水平冲刺（平滑）
+    // 冲刺斩：沿相机朝向水平冲刺（平滑）+ 路径伤害 + 穿过目标
     private void StartDash()
     {
         var cam = Camera.main;
@@ -104,6 +108,35 @@ public class SwordView : MonoBehaviour
         _dashing = true;
         _dashT = 0f;
         _swingAnim = 0f; // 冲刺带挥砍动作
+
+        // 路径伤害：冲刺路径（0~6m）内所有目标一刀 50 + 回条
+        var hits = Physics.OverlapSphere(transform.position + _dashDir * (GameConfig.DashAttackRange * 0.5f),
+            GameConfig.DashAttackRange * 0.6f);
+        foreach (var c in hits)
+        {
+            var comp = c.GetComponentInParent<HealthComponent>();
+            if (comp != null)
+            {
+                DamageSystem.ApplyHit(comp.Logic, GameConfig.SwordDamage, null);
+                OnSwordHit();
+            }
+        }
+        // 穿过目标：冲刺期间忽略与 Health 目标的碰撞（结束恢复）
+        foreach (var hc in FindObjectsOfType<HealthComponent>())
+        {
+            var col = hc.GetComponent<Collider>();
+            if (col != null) Physics.IgnoreCollision(_cc, col, true);
+        }
+    }
+
+    // 冲刺结束：恢复与目标的碰撞
+    private void RestoreCollisions()
+    {
+        foreach (var hc in FindObjectsOfType<HealthComponent>())
+        {
+            var col = hc.GetComponent<Collider>();
+            if (col != null) Physics.IgnoreCollision(_cc, col, false);
+        }
     }
 
     // 供伤害系统查询：格挡状态与格挡条
