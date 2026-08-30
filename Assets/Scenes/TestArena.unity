@@ -480,8 +480,8 @@ GameObject:
   m_Component:
   - component: {fileID: 442825359}
   - component: {fileID: 442825358}
-  - component: {fileID: 442825365}
   - component: {fileID: 442825360}
+  - component: {fileID: 442825365}
   - component: {fileID: 442825361}
   - component: {fileID: 442825363}
   - component: {fileID: 442825362}
@@ -547,11 +547,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09cacea09db091841bb421c9cdf7e688, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
-  gravity: -25
-  wallDetectRange: 1.2
-  fpsCamera: {fileID: 2091671113}
-  debugSpeed: 0
-  debugState: 
 --- !u!114 &442825361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -614,9 +609,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 442825356}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cb111033c0416e44a4e9eec4b9e9aa8, type: 3}
+  m_Script: {fileID: 11500000, guid: 6be4026112a116240b422386a7b23e0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  gravity: -25
+  wallDetectRange: 1.2
+  fpsCamera: {fileID: 2091671113}
+  debugSpeed: 0
+  debugState: 
 --- !u!1 &500051671
 GameObject:
   m_ObjectHideFlags: 0

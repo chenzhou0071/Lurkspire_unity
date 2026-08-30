@@ -93,8 +93,6 @@ public class GunView : MonoBehaviour
                     _flashTimer = 0.15f; // 锁头闪光更明显
                     _lastShooter = lockShooter;
                     _lockFlash = 0.6f;   // 锁头提示（枪口持续亮）
-                    var hud = FindFirstObjectByType<HUD>();
-                    if (hud != null) hud.ShowLockFlash(); // 屏幕提示 "LOCK!"
                 }
             }
         }
@@ -164,6 +162,8 @@ public class GunView : MonoBehaviour
             DamageSystem.ApplyHit(target.Logic, GameConfig.LockOnDamage,
                 target.GetComponentInChildren<SwordView>()?.GetBlocker());
             target.GetComponent<TargetIndicator>()?.ShowLocked(); // 目标头顶闪黄（锁定反馈）
+            var hud = FindFirstObjectByType<HUD>();
+            if (hud != null) hud.ShowLockFlash(); // 只在锁到人时提示 "LOCK!"
         }
         else
         {
