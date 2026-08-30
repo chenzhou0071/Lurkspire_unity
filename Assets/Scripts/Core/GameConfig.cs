@@ -33,7 +33,7 @@ public static class GameConfig
     public const float SlideDuration = 0.8f;   // 滑铲时长
     public const float JumpHeight = 3f;        // 跳跃高度
     public const float AirJumpHeight = 2.5f;   // 二段跳高度（空中变向修正，略低于普通跳）
-    public const float AirJumpSpeed = 16f;     // 二段跳变向速度（= 跑步速度，够转向/扑墙）
+    public const float AirJumpSpeed = 14f;     // 二段跳变向速度（= 跑步速度，够转向/扑墙）
     public const float WallJumpHeight = 2.2f;  // 跑墙跳高度（略低——重点是横向弹射）
     public const float WallJumpAwaySpeed = 15f; // 跑墙跳：侧跳（离墙）速度——强弹射
     public const float WallJumpForwardSpeed = 18f; // 跑墙跳：左前飞（W 修饰）速度（合速度需快于跑墙）

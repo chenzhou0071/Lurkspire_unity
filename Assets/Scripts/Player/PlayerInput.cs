@@ -56,9 +56,10 @@ public class PlayerInput : MonoBehaviour
         transform.localScale = new Vector3(1f, sy, 1f);
 
         // ---- 跑墙检测（空中 + 左右侧有墙 + 按 W → 上墙） ----
-        // 跳出冷却期间禁止上墙（防跳出瞬间吸回）；冷却后允许换到不同方向的墙（墙间转移）
+        // 地面检测：CC.isGrounded 静止时会抖动（皮肤宽度/浮点）——加脚下射线兜底，状态稳定
+        bool grounded = _cc.isGrounded
+            || Physics.Raycast(transform.position, Vector3.down, 0.25f);
         _wallJumpCooldown -= Time.deltaTime;
-        bool grounded = _cc.isGrounded;
         bool wallHit = Physics.Raycast(transform.position, transform.right, out var hit, wallDetectRange);
         if (!wallHit) // 右侧没墙 → 检测左侧
             wallHit = Physics.Raycast(transform.position, -transform.right, out hit, wallDetectRange);
@@ -84,6 +85,8 @@ public class PlayerInput : MonoBehaviour
         _wallDropCooldown -= Time.deltaTime;
         if (grounded && wallRunning)
             _wallRun.Exit(); // 落地退出（下次上墙自动刷新 3 秒）
+        if (grounded && _velocity.y < 0f)
+            _velocity.y = 0f; // 落地清零垂直速度（防残留下落速度——走出台面"光速下落"根因）
         if (wallRunning && _motor.IsSliding)
             _motor.SetSlide(false); // 上墙时强制退出滑铲（两状态不共存）
 
