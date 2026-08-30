@@ -7,6 +7,7 @@ public static class GameConfig
     public const int GunDamage = 25;           // 每发 25% = 100/4
     public const int ChargeMax = 3;            // 锁头充能上限
     public const float ChargeSeconds = 10f;    // 充能一发时间
+    public const float LockSpinSeconds = 0.6f; // 锁头转枪蓄力时长（360° 由快变慢）
     public const int MagazineSize = 8;         // 弹匣 8 发
     public const float ReloadSeconds = 1.2f;   // 换弹时间
     public const float FireInterval = 0.09f;   // 交替射速间隔

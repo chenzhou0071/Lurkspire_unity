@@ -8,6 +8,7 @@ public class GunController
     public int Ammo { get; private set; } = GameConfig.MagazineSize;
     public bool IsReloading => _reloadTimer > 0f;
     public int Charge { get; private set; } // 锁头充能存量（10s 一发，最多存 3）
+    public int NextShooter => _alternate;   // 下一发锁头的枪号（蓄力转枪表现用）
 
     // 开火：交替枪号（0 黑 / 1 白）；弹匣空/冷却中/换弹中失败
     public bool TryFire(out int shooter)

@@ -19,6 +19,10 @@ public class GunView : MonoBehaviour
     private Vector3 _sparkVel;
     private float _sparkTimer;
     private float _lockFlash;        // 锁头枪口大亮计时
+    private bool _charging;          // 转枪蓄力中
+    private float _chargeT;          // 蓄力进度
+    private float _lastSpinAngle;    // 上一帧旋转角（增量旋转用）
+    private Transform _spinningGun;  // 正在转的枪口（即将发射的那把）
 
     private void Awake()
     {
@@ -61,13 +65,34 @@ public class GunView : MonoBehaviour
         // 弹匣打空自动换弹（需要 ReloadSeconds，期间不能开火——由逻辑层控制）
         if (_gun.Ammo <= 0)
             _gun.Reload();
-        // 右键锁头：消耗充能，必中一击（弹道线沿准星方向，长 60m 命中表现）
-        if (mouse != null && mouse.rightButton.wasPressedThisFrame && _gun.TryLockOn(out int lockShooter))
+        // 右键锁头：按下开始转枪蓄力（360° 由快变慢）→ 蓄力完成发射
+        if (mouse != null && mouse.rightButton.wasPressedThisFrame && !_charging && _gun.Charge > 0)
         {
-            FireRay(lockShooter, 60f);
-            _flashTimer = 0.15f; // 锁头闪光更明显
-            _lastShooter = lockShooter;
-            _lockFlash = 0.6f;   // 锁头提示（枪口持续亮）
+            _charging = true;
+            _chargeT = 0f;
+            _lastSpinAngle = 0f;
+            _spinningGun = _gun.NextShooter == 0 ? muzzleBlack : muzzleWhite; // 转即将发射的枪
+        }
+        if (_charging)
+        {
+            _chargeT += Time.deltaTime / GameConfig.LockSpinSeconds;
+            float t = Mathf.Clamp01(_chargeT);
+            // easeOutQuad：角度 0→360，速度由快变慢（蓄力感）
+            float angle = 360f * (1f - (1f - t) * (1f - t));
+            if (_spinningGun != null)
+                _spinningGun.Rotate(Vector3.up, angle - _lastSpinAngle);
+            _lastSpinAngle = angle;
+            if (t >= 1f)
+            {
+                _charging = false;
+                if (_gun.TryLockOn(out int lockShooter))
+                {
+                    FireRay(lockShooter, 60f);
+                    _flashTimer = 0.15f; // 锁头闪光更明显
+                    _lastShooter = lockShooter;
+                    _lockFlash = 0.6f;   // 锁头提示（枪口持续亮）
+                }
+            }
         }
 
         // 枪口闪光：交替枪号对应左右枪口脉冲（在基础 Scale 上放大，不覆盖手动设置）
