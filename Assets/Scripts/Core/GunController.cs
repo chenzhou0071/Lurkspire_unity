@@ -1,11 +1,13 @@
-// GunController — 双枪逻辑（纯逻辑可测）：黑白交替/弹匣/冷却/换弹（需时）
+// GunController — 双枪逻辑（纯逻辑可测）：黑白交替/弹匣/冷却/换弹（需时）/充能锁头
 public class GunController
 {
     private int _alternate;      // 交替序列：0=黑 1=白
     private float _cooldown;
     private float _reloadTimer;
+    private float _chargeTimer;
     public int Ammo { get; private set; } = GameConfig.MagazineSize;
     public bool IsReloading => _reloadTimer > 0f;
+    public int Charge { get; private set; } // 锁头充能存量（10s 一发，最多存 3）
 
     // 开火：交替枪号（0 黑 / 1 白）；弹匣空/冷却中/换弹中失败
     public bool TryFire(out int shooter)
@@ -25,7 +27,7 @@ public class GunController
         _reloadTimer = GameConfig.ReloadSeconds;
     }
 
-    // 每帧调用：冷却倒计时 + 换弹计时（结束补满弹匣）
+    // 每帧调用：冷却倒计时 + 换弹计时（结束补满弹匣）+ 充能累计（10s 一发，存 3 封顶）
     public void Tick(float dt)
     {
         if (_cooldown > 0f) _cooldown -= dt;
@@ -38,5 +40,24 @@ public class GunController
                 Ammo = GameConfig.MagazineSize;
             }
         }
+        if (Charge < GameConfig.ChargeMax)
+        {
+            _chargeTimer += dt;
+            if (_chargeTimer >= GameConfig.ChargeSeconds)
+            {
+                _chargeTimer = 0f;
+                Charge++;
+            }
+        }
+    }
+
+    // 锁头：消耗一发充能，返回交替枪号（第 1 次白枪 / 第 2 次黑枪）；无充能失败
+    public bool TryLockOn(out int shooter)
+    {
+        shooter = _alternate;
+        if (Charge <= 0) return false;
+        _alternate = 1 - _alternate;
+        Charge--;
+        return true;
     }
 }
