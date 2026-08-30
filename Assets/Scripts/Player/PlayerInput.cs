@@ -21,6 +21,8 @@ public class PlayerInput : MonoBehaviour
     private float _wallJumpCooldown; // 跳出冷却：期间禁止上任何墙（防跳出瞬间吸回墙）
     private bool _airJumpReady = true; // 二段跳可用（落地/上墙刷新；空中用一次）
     private bool _wallJumpActive;    // 跑墙跳状态：只有它触发同墙防吸回（二段跳可自由上墙）
+    private bool _prevWallRunning;   // 上一帧跑墙状态（检测"刚掉墙"）
+    private float _wallDropCooldown; // 掉墙冷却：超时掉墙后 0.5s 内禁上墙（防"掉-吸"循环）
 
     private void Awake()
     {
@@ -61,7 +63,8 @@ public class PlayerInput : MonoBehaviour
         if (!wallHit) // 右侧没墙 → 检测左侧
             wallHit = Physics.Raycast(transform.position, -transform.right, out hit, wallDetectRange);
         bool wPressed = kb != null && kb.wKey.isPressed;
-        if (!grounded && wallHit && wPressed && !_wallRun.IsWallRunning && _wallJumpCooldown <= 0f)
+        if (!grounded && wallHit && wPressed && !_wallRun.IsWallRunning
+            && _wallJumpCooldown <= 0f && _wallDropCooldown <= 0f)
         {
             bool sameWall = _wallJumpActive && _jumpMomentum.sqrMagnitude > 0f
                 && Vector3.Dot(hit.normal, _lastWallNormal) > 0.7f; // 仅跑墙跳防吸回原墙
@@ -74,6 +77,11 @@ public class PlayerInput : MonoBehaviour
         }
         _wallRun.Tick(Time.deltaTime);
         bool wallRunning = _wallRun.IsWallRunning;
+        // 超时掉墙（上一帧跑墙 → 这一帧掉且没落地）→ 掉墙冷却（防立刻吸回循环）
+        if (_prevWallRunning && !wallRunning && !grounded)
+            _wallDropCooldown = 0.5f;
+        _prevWallRunning = wallRunning;
+        _wallDropCooldown -= Time.deltaTime;
         if (grounded && wallRunning)
             _wallRun.Exit(); // 落地退出（下次上墙自动刷新 3 秒）
         if (wallRunning && _motor.IsSliding)
