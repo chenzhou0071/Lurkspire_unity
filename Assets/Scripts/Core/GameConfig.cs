@@ -28,13 +28,15 @@ public static class GameConfig
     // ---- 机动 ----
     public const float RunSpeed = 16f;         // 快跑速度（手感阶段可调）
     public const float WallRunSeconds = 3f;    // 跑墙时长（换墙/落地刷新）
-    public const float WallRunSpeedMult = 1.4f; // 跑墙沿墙速度倍率（快于跑步，加速机动）
+    public const float WallRunSpeedMult = 1.6f; // 跑墙沿墙速度倍率（快于跑步，加速机动）
     public const float SlideSpeedMult = 1.3f;  // 滑铲速度倍率（比跑步快）
     public const float SlideDuration = 0.8f;   // 滑铲时长
     public const float JumpHeight = 3f;        // 跳跃高度
+    public const float AirJumpHeight = 2.5f;   // 二段跳高度（空中变向修正，略低于普通跳）
+    public const float AirJumpSpeed = 16f;     // 二段跳变向速度（= 跑步速度，够转向/扑墙）
     public const float WallJumpHeight = 2.5f;  // 跑墙跳高度（略低——重点是横向弹射）
-    public const float WallJumpAwaySpeed = 14f; // 跑墙跳：侧跳（离墙）速度——强弹射
-    public const float WallJumpForwardSpeed = 10f; // 跑墙跳：左前飞（W 修饰）速度
+    public const float WallJumpAwaySpeed = 15f; // 跑墙跳：侧跳（离墙）速度——强弹射
+    public const float WallJumpForwardSpeed = 18f; // 跑墙跳：左前飞（W 修饰）速度（合速度需快于跑墙）
     public const float AirControlWeight = 0.3f; // 空中操控权重（跳出后输入影响 30%，动量保持 70%）
     public const float FallGravityMult = 1.6f;  // 下落段重力倍率（下落速度越来越大，落地干脆）
     public const float MaxFallSpeed = 60f;     // 下落速度上限（防高空瞬移穿透）

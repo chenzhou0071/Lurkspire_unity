@@ -10,6 +10,8 @@ public class PlayerInput : MonoBehaviour
     [SerializeField] private float gravity = -25f;
     [SerializeField] private float wallDetectRange = 1.2f; // 跑墙检测距离（左右侧）
     [SerializeField] private PlayerCamera fpsCamera; // 第一人称相机（倾斜转发；不拖则无倾斜）
+    [SerializeField] private float debugSpeed;   // Inspector 调试：当前水平速度
+    [SerializeField] private string debugState;  // Inspector 调试：当前状态
     private CharacterController _cc;
     private PlayerMotor _motor;
     private WallRun _wallRun;
@@ -17,6 +19,8 @@ public class PlayerInput : MonoBehaviour
     private Vector3 _lastWallNormal;
     private Vector3 _jumpMomentum; // 跑墙跳的横向动量（落地清零，防止被方向覆盖）
     private float _wallJumpCooldown; // 跳出冷却：期间禁止上任何墙（防跳出瞬间吸回墙）
+    private bool _airJumpReady = true; // 二段跳可用（落地/上墙刷新；空中用一次）
+    private bool _wallJumpActive;    // 跑墙跳状态：只有它触发同墙防吸回（二段跳可自由上墙）
 
     private void Awake()
     {
@@ -59,12 +63,13 @@ public class PlayerInput : MonoBehaviour
         bool wPressed = kb != null && kb.wKey.isPressed;
         if (!grounded && wallHit && wPressed && !_wallRun.IsWallRunning && _wallJumpCooldown <= 0f)
         {
-            bool sameWall = _jumpMomentum.sqrMagnitude > 0f
-                && Vector3.Dot(hit.normal, _lastWallNormal) > 0.7f; // 法线夹角 <45° = 同一面墙
+            bool sameWall = _wallJumpActive && _jumpMomentum.sqrMagnitude > 0f
+                && Vector3.Dot(hit.normal, _lastWallNormal) > 0.7f; // 仅跑墙跳防吸回原墙
             if (!sameWall)
             {
                 _wallRun.Enter(hit.normal);
                 _lastWallNormal = hit.normal;
+                _airJumpReady = true; // 上墙刷新二段跳
             }
         }
         _wallRun.Tick(Time.deltaTime);
@@ -83,6 +88,7 @@ public class PlayerInput : MonoBehaviour
             _velocity.x = _jumpMomentum.x * keep + inputDir.x * GameConfig.RunSpeed * GameConfig.AirControlWeight;
             _velocity.z = _jumpMomentum.z * keep + inputDir.z * GameConfig.RunSpeed * GameConfig.AirControlWeight;
             if (grounded) _jumpMomentum = Vector3.zero; // 落地动量清零
+            if (grounded) _wallJumpActive = false;     // 落地解除防吸回
         }
         else
         {
@@ -120,7 +126,7 @@ public class PlayerInput : MonoBehaviour
         _velocity.y += g * Time.deltaTime;
         _velocity.y = Mathf.Max(_velocity.y, -GameConfig.MaxFallSpeed);
 
-        // ---- 跳（空格：跑墙中默认左上方跳 / W+空格左前方跳 / 落地起跳） ----
+        // ---- 跳（空格：跑墙跳 / 落地起跳 / 空中二段跳（变向）） ----
         if (kb != null && kb.spaceKey.wasPressedThisFrame)
         {
             if (wallRunning)
@@ -133,13 +139,37 @@ public class PlayerInput : MonoBehaviour
                 _velocity = jumpVel;
                 _jumpMomentum = jumpVel; _jumpMomentum.y = 0f; // 记横向动量（落地清零）
                 _wallJumpCooldown = 0.2f; // 跳出冷却：0.2s 内禁止上任何墙（防瞬间吸回）
+                _wallJumpActive = true;   // 跑墙跳：激活同墙防吸回
                 _wallRun.Exit(); // 跳离墙面（重新上墙刷新计时）
             }
             else if (grounded)
             {
                 _velocity.y = Mathf.Sqrt(GameConfig.JumpHeight * -2f * gravity);
+                _airJumpReady = true; // 落地起跳刷新二段跳
+            }
+            else if (_airJumpReady)
+            {
+                // 二段跳：向输入方向变向（无输入则保持当前水平速度，垂直跳）
+                Vector3 inputDir = (transform.right * move.x + transform.forward * move.y).normalized;
+                Vector3 jumpVel;
+                if (inputDir.sqrMagnitude > 0f)
+                    jumpVel = inputDir * GameConfig.AirJumpSpeed; // 变向冲
+                else
+                    jumpVel = new Vector3(_velocity.x, 0f, _velocity.z); // 保持动量垂直跳
+                jumpVel.y = Mathf.Sqrt(GameConfig.AirJumpHeight * -2f * gravity);
+                _velocity = jumpVel;
+                _jumpMomentum = jumpVel; _jumpMomentum.y = 0f; // 复用空中操控（可微调）
+                _airJumpReady = false; // 空中二段跳用完（落地/上墙刷新）
+                _wallJumpActive = false; // 二段跳非墙跳：可自由上墙（解除防吸回）
             }
         }
+
+        // ---- 调试信息（Inspector 实时显示，Play 模式下可见） ----
+        debugSpeed = new Vector2(_velocity.x, _velocity.z).magnitude;
+        debugState = wallRunning ? "WALLRUN"
+            : _motor.IsSliding ? "SLIDE"
+            : grounded ? "GROUND"
+            : _jumpMomentum.sqrMagnitude > 0f ? "AIR(MOMENTUM)" : "AIR";
 
         _cc.Move(_velocity * Time.deltaTime);
     }
