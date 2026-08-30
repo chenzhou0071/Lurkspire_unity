@@ -140,6 +140,14 @@ public class GunView : MonoBehaviour
         Vector3 from = muzzle != null ? muzzle.position
             : _cam.transform.position + _cam.transform.forward * 0.5f;
         from += dir * 0.3f; // 起点提前 0.3（防枪口在胶囊体内时火花被遮挡）
+        // 命中检测：射线找 Health 目标（靶子/敌人），命中造成伤害
+        if (Physics.Raycast(from, dir, out var hit, range))
+        {
+            var targetComp = hit.collider.GetComponentInParent<HealthComponent>();
+            if (targetComp != null)
+                DamageSystem.ApplyHit(targetComp.Logic, GameConfig.GunDamage,
+                    hit.collider.GetComponentInParent<SwordView>()?.GetBlocker());
+        }
         var color = shooter == 0 ? Color.black : Color.white; // 黑枪黑线 / 白枪白线
         _line.startColor = color; _line.endColor = color;
         _line.SetPosition(0, from);

@@ -29,9 +29,12 @@ public class SwordView : MonoBehaviour
         var kb = Keyboard.current;
         var mouse = Mouse.current;
 
-        // 左键挥砍（下劈动画）
+        // 左键挥砍（下劈动画 + 前方 3m 范围伤害）
         if (mouse != null && mouse.leftButton.wasPressedThisFrame && _sword.TrySwing())
+        {
             _swingAnim = 0f; // 开始挥砍动画
+            SwingHit();
+        }
         // Shift 冲刺斩：平滑冲刺（0.2s 冲 6m）
         if (kb != null && kb.leftShiftKey.wasPressedThisFrame && _sword.TryDashAttack())
             StartDash();
@@ -72,6 +75,22 @@ public class SwordView : MonoBehaviour
         }
     }
 
+    // 挥砍范围伤害：前方 SwordRange 内所有 Health 目标（一刀 50；砍中回格挡条）
+    private void SwingHit()
+    {
+        var hits = Physics.OverlapSphere(transform.position + transform.forward * (GameConfig.SwordRange * 0.5f),
+            GameConfig.SwordRange);
+        foreach (var c in hits)
+        {
+            var targetComp = c.GetComponentInParent<HealthComponent>();
+            if (targetComp != null)
+            {
+                DamageSystem.ApplyHit(targetComp.Logic, GameConfig.SwordDamage, null);
+                OnSwordHit(); // 砍中回格挡条
+            }
+        }
+    }
+
     // 冲刺斩：沿相机朝向水平冲刺（平滑）
     private void StartDash()
     {
@@ -87,9 +106,10 @@ public class SwordView : MonoBehaviour
         _swingAnim = 0f; // 冲刺带挥砍动作
     }
 
-    // 供伤害系统/锁定查询：格挡状态与格挡条（T7/T8 用）
+    // 供伤害系统查询：格挡状态与格挡条
     public bool IsBlocking => _sword.IsBlocking;
     public float Block => _sword.Block;
+    public SwordController GetBlocker() => _sword; // 目标持刀格挡时提供减伤
     public void OnSwordHit() => _sword.GainBlock(GameConfig.BlockGainOnHit); // 砍中回条
 
     // 切枪显示控制（WeaponSwitch 调用：刀是相机子物体，需显隐管理）

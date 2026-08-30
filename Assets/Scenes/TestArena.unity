@@ -147,8 +147,8 @@ Transform:
   m_GameObject: {fileID: 152301660}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.4, y: 0.2, z: 0.7}
-  m_LocalScale: {x: 0.08, y: 1, z: 0.08}
+  m_LocalPosition: {x: 0.2, y: 0, z: 0.4}
+  m_LocalScale: {x: 0.08, y: 0.6, z: 0.08}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2091671111}
@@ -355,6 +355,8 @@ GameObject:
   - component: {fileID: 442825358}
   - component: {fileID: 442825360}
   - component: {fileID: 442825361}
+  - component: {fileID: 442825363}
+  - component: {fileID: 442825362}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -435,6 +437,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GunView
   muzzleBlack: {fileID: 803723144}
   muzzleWhite: {fileID: 1372732186}
+--- !u!114 &442825362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 442825356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f36e6fd6c8c126e49af07027bb700417, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponSwitch
+--- !u!114 &442825363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 442825356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3c64058361d5e9419273f532fca81ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SwordView
+  blade: {fileID: 152301661}
+  swingPitchUp: 50
+  swingPitchDown: -40
 --- !u!1 &500051671
 GameObject:
   m_ObjectHideFlags: 0
