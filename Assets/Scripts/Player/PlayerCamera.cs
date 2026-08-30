@@ -8,6 +8,8 @@ public class PlayerCamera : MonoBehaviour
 {
     [SerializeField] private float sensitivity = 0.15f;
     [SerializeField] private float maxPitch = 85f;
+    [SerializeField] private float fov = 80f; // 视场角（广角：默认 60 → 80）
+    [SerializeField] private float nearClip = 0.1f; // 近裁剪面（小：贴墙不穿帮）
     [SerializeField] private Transform playerBody; // 玩家物体（yaw + 倾斜作用对象；不拖自动取父物体）
     private float _pitch;
     private float _yaw;
@@ -16,6 +18,12 @@ public class PlayerCamera : MonoBehaviour
     private void Awake()
     {
         Cursor.lockState = CursorLockMode.Locked; // 锁鼠标（FPS 标准）
+        var cam = GetComponent<Camera>();
+        if (cam != null)
+        {
+            cam.fieldOfView = fov; // 广角视场
+            cam.nearClipPlane = nearClip; // 近裁剪面（防贴墙看到墙后）
+        }
         if (playerBody == null && transform.parent != null)
             playerBody = transform.parent;
     }

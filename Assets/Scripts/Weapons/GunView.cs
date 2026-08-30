@@ -23,10 +23,12 @@ public class GunView : MonoBehaviour
     private float _chargeT;          // 蓄力进度
     private float _lastSpinAngle;    // 上一帧旋转角（增量旋转用）
     private Transform _spinningGun;  // 正在转的枪口（即将发射的那把）
+    private Collider[] _myColliders; // 玩家全部碰撞体（CC+子物体——命中检测全部忽略，防自伤）
 
     private void Awake()
     {
         _cam = Camera.main;
+        _myColliders = GetComponentsInChildren<Collider>(); // CC + 子物体全部
         if (muzzleBlack != null) _blackBaseScale = muzzleBlack.localScale;
         if (muzzleWhite != null) _whiteBaseScale = muzzleWhite.localScale;
         _line = gameObject.AddComponent<LineRenderer>();
@@ -80,17 +82,19 @@ public class GunView : MonoBehaviour
             // easeOutQuad：角度 0→360，速度由快变慢（蓄力感）
             float angle = 360f * (1f - (1f - t) * (1f - t));
             if (_spinningGun != null)
-                _spinningGun.Rotate(Vector3.up, angle - _lastSpinAngle);
+                _spinningGun.Rotate(Vector3.right, angle - _lastSpinAngle); // 绕 X 轴前后转（蓄力）
             _lastSpinAngle = angle;
             if (t >= 1f)
             {
                 _charging = false;
                 if (_gun.TryLockOn(out int lockShooter))
                 {
-                    FireRay(lockShooter, 60f, GameConfig.LockOnDamage); // 锁头：50 伤害必中一击
+                    FireLockOn(lockShooter); // 锁头：自动锁定视野内最近目标（必中）
                     _flashTimer = 0.15f; // 锁头闪光更明显
                     _lastShooter = lockShooter;
                     _lockFlash = 0.6f;   // 锁头提示（枪口持续亮）
+                    var hud = FindFirstObjectByType<HUD>();
+                    if (hud != null) hud.ShowLockFlash(); // 屏幕提示 "LOCK!"
                 }
             }
         }
@@ -126,11 +130,88 @@ public class GunView : MonoBehaviour
         if (muzzleWhite != null) muzzleWhite.gameObject.SetActive(visible);
     }
 
+    // 后台充能驱动（WeaponSwitch 常驻调用：切刀后 GunView 禁用但充能继续累计）
+    public void TickCharge(float dt) => _gun.Tick(dt);
+
+    // HUD 数据
+    public int Ammo => _gun.Ammo;
+    public int Charge => _gun.Charge;
+    public float ChargeProgress => _gun.ChargeProgress;
+
+    // 是否玩家自己的碰撞体（CC + 子物体）
+    private bool IsMine(Collider c)
+    {
+        foreach (var mc in _myColliders)
+            if (mc == c) return true;
+        return false;
+    }
+
+    // 锁头：自动锁定视野内（夹角 20°）离准心最近的目标 → 弹道指向目标 + 必中伤害
+    // 无目标 → 沿准星方向发射（现状）
+    private void FireLockOn(int shooter)
+    {
+        Transform muzzle = shooter == 0 ? muzzleBlack : muzzleWhite;
+        Vector3 from = muzzle != null ? muzzle.position
+            : _cam.transform.position + _cam.transform.forward * 0.5f;
+        from += _cam.transform.forward * 0.3f;
+
+        var target = FindNearestTarget();
+        if (target != null)
+        {
+            // 锁定：弹道指向目标中心，直接造成 50 伤害（必中，无视偏移）
+            Vector3 dir = (target.transform.position - from).normalized;
+            DrawShotVisual(from, dir, 60f, shooter);
+            DamageSystem.ApplyHit(target.Logic, GameConfig.LockOnDamage,
+                target.GetComponentInChildren<SwordView>()?.GetBlocker());
+            target.GetComponent<TargetIndicator>()?.ShowLocked(); // 目标头顶闪黄（锁定反馈）
+        }
+        else
+        {
+            FireRay(shooter, 60f, GameConfig.LockOnDamage); // 无目标：沿准星
+        }
+    }
+
+    // 视野内离准星最近的目标（排除玩家自身及后代；夹角 20° 内才算锁定）
+    private HealthComponent FindNearestTarget()
+    {
+        const float maxAngle = 20f;
+        HealthComponent best = null;
+        float bestAngle = maxAngle;
+        foreach (var hc in FindObjectsByType<HealthComponent>(FindObjectsSortMode.None))
+        {
+            if (hc.transform.IsChildOf(transform)) continue; // 自己人
+            Vector3 toTarget = (hc.transform.position - _cam.transform.position).normalized;
+            float angle = Vector3.Angle(_cam.transform.forward, toTarget);
+            if (angle < bestAngle)
+            {
+                bestAngle = angle;
+                best = hc;
+            }
+        }
+        return best;
+    }
+
+    // 画弹道视觉（线 + 火花）——锁头/普通射击共用
+    private void DrawShotVisual(Vector3 from, Vector3 dir, float range, int shooter)
+    {
+        var color = shooter == 0 ? Color.black : Color.white; // 黑枪黑线 / 白枪白线
+        _line.startColor = color; _line.endColor = color;
+        _line.SetPosition(0, from);
+        _line.SetPosition(1, from + dir * range);
+        _line.enabled = true;
+        _lineTimer = 0.1f; // 弹道线显示 0.1 秒
+        // 枪口火花球：从枪口沿瞄准方向飞出（开火反馈，必然可见）
+        _spark.transform.position = from;
+        _sparkVel = dir * 60f;
+        _sparkTimer = 0.12f;
+        _spark.SetActive(true);
+    }
+
     // 瞄准：第一人称子弹方向 = 相机 forward（准星方向，含俯仰）
     // 之前用"水平面求交"——平视时射线与水平面平行无交点，导致开火无输出（bug 根因）
     private void FireRay(int shooter)
     {
-        FireRay(shooter, 30f, GameConfig.GunDamage);
+        FireRay(shooter, 40f, GameConfig.GunDamage); // 左键射程 40m
     }
 
     // damage: 指定伤害（锁头传 LockOnDamage；默认调用走 GunDamage）
@@ -143,8 +224,8 @@ public class GunView : MonoBehaviour
         // 子弹方向：枪口 → 瞄准点（准星方向 range 处交点）——汇聚到准心，指哪打哪
         Vector3 aimPoint = _cam.transform.position + _cam.transform.forward * range;
         Vector3 dir = (aimPoint - from).normalized;
-        // 命中检测：沿子弹飞行线找 Health 目标
-        if (Physics.Raycast(from, dir, out var hit, range))
+        // 命中检测：沿子弹飞行线找 Health 目标（玩家自身及后代全跳过——层级判断）
+        if (Physics.Raycast(from, dir, out var hit, range) && !hit.collider.transform.IsChildOf(transform))
         {
             var targetComp = hit.collider.GetComponentInParent<HealthComponent>();
             if (targetComp != null)

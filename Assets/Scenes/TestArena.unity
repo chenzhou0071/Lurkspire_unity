@@ -240,7 +240,7 @@ Transform:
   m_GameObject: {fileID: 120773510}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 35, y: 1, z: -41.82}
+  m_LocalPosition: {x: -9.09, y: 11.49, z: -41.82}
   m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -480,10 +480,12 @@ GameObject:
   m_Component:
   - component: {fileID: 442825359}
   - component: {fileID: 442825358}
+  - component: {fileID: 442825365}
   - component: {fileID: 442825360}
   - component: {fileID: 442825361}
   - component: {fileID: 442825363}
   - component: {fileID: 442825362}
+  - component: {fileID: 442825364}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -525,7 +527,7 @@ Transform:
   m_GameObject: {fileID: 442825356}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 27.1, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -591,6 +593,30 @@ MonoBehaviour:
   blade: {fileID: 152301661}
   swingPitchUp: 50
   swingPitchDown: -40
+--- !u!114 &442825364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 442825356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78e533278741a62479703574bb1c6cbe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Lurkspire.Core::HealthComponent
+--- !u!114 &442825365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 442825356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cb111033c0416e44a4e9eec4b9e9aa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
 --- !u!1 &500051671
 GameObject:
   m_ObjectHideFlags: 0
@@ -697,7 +723,7 @@ Transform:
   m_GameObject: {fileID: 500051671}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -10.09, y: 10, z: 4}
+  m_LocalPosition: {x: -10.082, y: 10, z: 4}
   m_LocalScale: {x: 0.5, y: 10, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -971,7 +997,7 @@ Transform:
   m_GameObject: {fileID: 803723143}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4, y: -0.25, z: 0.5}
+  m_LocalPosition: {x: 0.4, y: -0.25, z: 0.3}
   m_LocalScale: {x: 0.15, y: 0.15, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1285,7 +1311,7 @@ Transform:
   m_GameObject: {fileID: 1372732185}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.4, y: -0.25, z: 0.5}
+  m_LocalPosition: {x: -0.4, y: -0.25, z: 0.3}
   m_LocalScale: {x: 0.15, y: 0.15, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1617,7 +1643,7 @@ Transform:
   m_GameObject: {fileID: 1844415547}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 35, y: 1, z: -38.2}
+  m_LocalPosition: {x: 0.43, y: 1, z: -15.9}
   m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1749,6 +1775,7 @@ GameObject:
   - component: {fileID: 2091671112}
   - component: {fileID: 2091671113}
   - component: {fileID: 2091671114}
+  - component: {fileID: 2091671115}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1891,6 +1918,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCamera
   sensitivity: 0.15
   maxPitch: 85
+  fov: 90
+  nearClip: 0.1
   playerBody: {fileID: 0}
 --- !u!114 &2091671114
 MonoBehaviour:
@@ -1904,6 +1933,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0c22526370823d45a5b0d972178d90a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Crosshair
+--- !u!114 &2091671115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2091671108}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f363d2b1c5d224e45b7e40edc61721ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HUD
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

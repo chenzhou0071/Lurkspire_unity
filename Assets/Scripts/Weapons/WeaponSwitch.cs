@@ -18,10 +18,24 @@ public class WeaponSwitch : MonoBehaviour
 
     private void Update()
     {
+        // 后台充能/冷却：切刀后 GunView 禁用，充能仍每帧累计；切枪后 SwordView 禁用，冲刺冷却仍恢复
+        if (_gunView != null) _gunView.TickCharge(Time.deltaTime);
+        if (_swordView != null) _swordView.TickCooldowns(Time.deltaTime);
         var kb = Keyboard.current;
-        if (kb == null) return;
-        if (kb.digit1Key.wasPressedThisFrame) SetWeapon(1);
-        else if (kb.digit2Key.wasPressedThisFrame) SetWeapon(2);
+        var mouse = Mouse.current;
+        // 数字键切换
+        if (kb != null)
+        {
+            if (kb.digit1Key.wasPressedThisFrame) SetWeapon(1);
+            else if (kb.digit2Key.wasPressedThisFrame) SetWeapon(2);
+        }
+        // 滚轮切换：向上=枪 向下=刀
+        if (mouse != null)
+        {
+            float scroll = mouse.scroll.ReadValue().y;
+            if (scroll > 0f) SetWeapon(1);
+            else if (scroll < 0f) SetWeapon(2);
+        }
     }
 
     private void SetWeapon(int w)

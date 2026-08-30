@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 // Health — 血量（纯逻辑可测）：伤害经格挡介入后扣血、死亡回调、重置
 public class Health

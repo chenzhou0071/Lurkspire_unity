@@ -10,6 +10,10 @@ public class GunController
     public int Charge { get; private set; } // 锁头充能存量（10s 一发，最多存 3）
     public int NextShooter => _alternate;   // 下一发锁头的枪号（蓄力转枪表现用）
 
+    // 当前充能进度（0~1）：满 3 发为 1；否则为正在充的那发进度（HUD 格子显示）
+    public float ChargeProgress =>
+        Charge >= GameConfig.ChargeMax ? 1f : _chargeTimer / GameConfig.ChargeSeconds;
+
     // 开火：交替枪号（0 黑 / 1 白）；弹匣空/冷却中/换弹中失败
     public bool TryFire(out int shooter)
     {

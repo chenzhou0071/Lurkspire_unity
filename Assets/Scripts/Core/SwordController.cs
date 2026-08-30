@@ -25,6 +25,9 @@ public class SwordController
         return true;
     }
 
+    // 冲刺冷却剩余（HUD 显示用）
+    public float DashCooldownRemain => _dashCooldown;
+
     // 格挡伤害：条够 10 则减伤 50%（返回是否成功格挡）
     public bool BlockDamage(ref int damage)
     {

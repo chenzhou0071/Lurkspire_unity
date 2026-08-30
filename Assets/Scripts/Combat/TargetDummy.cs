@@ -14,6 +14,8 @@ public class TargetDummy : MonoBehaviour
     {
         _healthComp = GetComponent<HealthComponent>();
         if (_healthComp == null) _healthComp = gameObject.AddComponent<HealthComponent>();
+        if (GetComponent<TargetIndicator>() == null)
+            gameObject.AddComponent<TargetIndicator>(); // 锁定标记（头顶闪黄）
         _healthComp.Logic.OnDeath += OnDummyDeath;
         _upRotation = transform.rotation;
     }

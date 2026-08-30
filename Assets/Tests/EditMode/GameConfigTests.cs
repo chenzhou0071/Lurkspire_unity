@@ -11,7 +11,7 @@ public class GameConfigTests
         Assert.AreEqual(50, GameConfig.LockOnDamage);       // 锁头伤害
         Assert.AreEqual(3, GameConfig.ChargeMax);           // 锁头存 3 发
         Assert.AreEqual(10f, GameConfig.ChargeSeconds);     // 10s 充能
-        Assert.AreEqual(0.6f, GameConfig.LockSpinSeconds);  // 锁头转枪蓄力时长
+        Assert.AreEqual(1f, GameConfig.LockSpinSeconds);   // 锁头转枪蓄力时长
         Assert.AreEqual(50, GameConfig.SwordDamage);        // 刀 50% = 两刀
         Assert.AreEqual(100, GameConfig.BlockMax);          // 格挡条
         Assert.AreEqual(10, GameConfig.BlockCostPerShot);   // 挡一枪 -10
