@@ -20,7 +20,7 @@ public class GameConfigTests
         Assert.AreEqual(1f, GameConfig.WallRunSeconds);     // 跑墙 1s（超时掉墙）
         Assert.AreEqual(2.2f, GameConfig.WallJumpHeight);   // 跑墙跳高度（略低于普通跳）
         Assert.AreEqual(2.5f, GameConfig.AirJumpHeight);    // 二段跳高度
-        Assert.AreEqual(16f, GameConfig.AirJumpSpeed);      // 二段跳变向速度
+        Assert.AreEqual(14f, GameConfig.AirJumpSpeed);      // 二段跳变向速度
         Assert.AreEqual(100, GameConfig.MaxHealth);         // 血量
         Assert.AreEqual(1f, GameConfig.SpawnInvulnSeconds); // 重生无敌
         Assert.AreEqual(15f, GameConfig.WallJumpAwaySpeed); // 跑墙侧跳速度（弹射）

@@ -44,8 +44,10 @@ public class PlayerInput : MonoBehaviour
         }
 
         // ---- 滑铲（C 键点按启动，仅落地可用、跑墙中禁止——防空中/跑墙边界冲突） ----
+        // 落地判断用射线兜底（_cc.isGrounded 落地滞后——会导致落地后按 C 无反应）
         if (kb != null && kb.cKey.wasPressedThisFrame
-            && _cc.isGrounded && !_wallRun.IsWallRunning)
+            && (_cc.isGrounded || Physics.Raycast(transform.position, Vector3.down, 0.25f))
+            && !_wallRun.IsWallRunning)
             _motor.SetSlide(true);
         _motor.TickSlide(Time.deltaTime);
         _cc.height = Mathf.Lerp(_cc.height, _motor.IsSliding ? 0.6f : 2f, 12f * Time.deltaTime);
@@ -71,13 +73,24 @@ public class PlayerInput : MonoBehaviour
                 && Vector3.Dot(hit.normal, _lastWallNormal) > 0.7f; // 仅跑墙跳防吸回原墙
             if (!sameWall)
             {
-                _wallRun.Enter(hit.normal);
+                _wallRun.Enter(hit.normal, transform.forward); // 上墙：锁定跑墙方向（防视角转向翻转）
                 _lastWallNormal = hit.normal;
                 _airJumpReady = true; // 上墙刷新二段跳
             }
         }
         _wallRun.Tick(Time.deltaTime);
         bool wallRunning = _wallRun.IsWallRunning;
+        // 跑墙中墙没了（跑到尽头）→ 自动退出跑墙（惯性飞出，恢复正常物理）
+        if (wallRunning)
+        {
+            bool stillWall = Physics.Raycast(transform.position, transform.right, wallDetectRange)
+                || Physics.Raycast(transform.position, -transform.right, wallDetectRange);
+            if (!stillWall)
+            {
+                _wallRun.Exit();
+                wallRunning = false;
+            }
+        }
         // 超时掉墙（上一帧跑墙 → 这一帧掉且没落地）→ 掉墙冷却（防立刻吸回循环）
         if (_prevWallRunning && !wallRunning && !grounded)
             _wallDropCooldown = 0.5f;
@@ -106,7 +119,7 @@ public class PlayerInput : MonoBehaviour
             float speed = PlayerMotor.ComputeSpeed(wallRunning, _motor.IsSliding);
             Vector3 dir;
             if (wallRunning)
-                dir = wPressed ? _wallRun.RunDirection(transform.forward) : Vector3.zero;
+                dir = wPressed ? _wallRun.RunDir : Vector3.zero; // 固定方向（上墙时锁定）
             else
                 dir = (transform.right * move.x + transform.forward * move.y).normalized;
             _velocity.x = dir.x * speed;
@@ -142,10 +155,10 @@ public class PlayerInput : MonoBehaviour
         {
             if (wallRunning)
             {
-                // 跑墙跳：默认侧跳（离墙+蹬墙跳更高）；按住 W 加沿墙前冲（左前飞）
+                // 跑墙跳：默认侧跳（离墙+蹬墙跳更高）；按住 W 加沿墙前冲（左前飞——沿锁定方向）
                 Vector3 jumpVel = _lastWallNormal * GameConfig.WallJumpAwaySpeed;
                 if (kb.wKey.isPressed)
-                    jumpVel += _wallRun.RunDirection(transform.forward) * GameConfig.WallJumpForwardSpeed;
+                    jumpVel += _wallRun.RunDir * GameConfig.WallJumpForwardSpeed;
                 jumpVel += Vector3.up * Mathf.Sqrt(GameConfig.WallJumpHeight * -2f * gravity);
                 _velocity = jumpVel;
                 _jumpMomentum = jumpVel; _jumpMomentum.y = 0f; // 记横向动量（落地清零）
