@@ -23,6 +23,9 @@ public class PlayerInput : MonoBehaviour
     private bool _wallJumpActive;    // 跑墙跳状态：只有它触发同墙防吸回（二段跳可自由上墙）
     private bool _prevWallRunning;   // 上一帧跑墙状态（检测"刚掉墙"）
     private float _wallDropCooldown; // 掉墙冷却：超时掉墙后 0.5s 内禁上墙（防"掉-吸"循环）
+    // 跑墙检测遮罩：排除 Boundary 层（边界墙挡人但不可跑墙）
+    private static readonly int BoundaryLayer = 6; // 需在 Project Settings → Tags and Layers 建同名层
+    private static readonly int WallMask = ~(1 << BoundaryLayer);
 
     private void Awake()
     {
@@ -62,9 +65,9 @@ public class PlayerInput : MonoBehaviour
         bool grounded = _cc.isGrounded
             || Physics.Raycast(transform.position, Vector3.down, 0.25f);
         _wallJumpCooldown -= Time.deltaTime;
-        bool wallHit = Physics.Raycast(transform.position, transform.right, out var hit, wallDetectRange);
+        bool wallHit = Physics.Raycast(transform.position, transform.right, out var hit, wallDetectRange, WallMask);
         if (!wallHit) // 右侧没墙 → 检测左侧
-            wallHit = Physics.Raycast(transform.position, -transform.right, out hit, wallDetectRange);
+            wallHit = Physics.Raycast(transform.position, -transform.right, out hit, wallDetectRange, WallMask);
         bool wPressed = kb != null && kb.wKey.isPressed;
         if (!grounded && wallHit && wPressed && !_wallRun.IsWallRunning
             && _wallJumpCooldown <= 0f && _wallDropCooldown <= 0f)
@@ -83,8 +86,8 @@ public class PlayerInput : MonoBehaviour
         // 跑墙中墙没了（跑到尽头）→ 自动退出跑墙（惯性飞出，恢复正常物理）
         if (wallRunning)
         {
-            bool stillWall = Physics.Raycast(transform.position, transform.right, wallDetectRange)
-                || Physics.Raycast(transform.position, -transform.right, wallDetectRange);
+            bool stillWall = Physics.Raycast(transform.position, transform.right, wallDetectRange, WallMask)
+                || Physics.Raycast(transform.position, -transform.right, wallDetectRange, WallMask);
             if (!stillWall)
             {
                 _wallRun.Exit();
