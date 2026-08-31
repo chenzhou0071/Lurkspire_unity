@@ -18,7 +18,7 @@ public class GameConfigTests
         Assert.AreEqual(5f, GameConfig.BlockRegenPerSec);   // 回 5/s
         Assert.AreEqual(0.5f, GameConfig.BlockDamageMult);  // 减伤 50%
         Assert.AreEqual(20, GameConfig.BlockGainOnHit);     // 砍人 +20
-        Assert.AreEqual(1f, GameConfig.WallRunSeconds);     // 跑墙 1s（超时掉墙）
+        Assert.AreEqual(1.5f, GameConfig.WallRunSeconds);   // 跑墙 1.5s（超时掉墙）
         Assert.AreEqual(2.2f, GameConfig.WallJumpHeight);   // 跑墙跳高度（略低于普通跳）
         Assert.AreEqual(2.5f, GameConfig.AirJumpHeight);    // 二段跳高度
         Assert.AreEqual(14f, GameConfig.AirJumpSpeed);      // 二段跳变向速度
