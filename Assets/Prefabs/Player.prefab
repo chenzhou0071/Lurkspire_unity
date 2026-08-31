@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 506679356025267972}
   - component: {fileID: 6205607230034366334}
   - component: {fileID: 7400950075451797492}
-  - component: {fileID: 1476624812090923839}
   - component: {fileID: 2515955578349905954}
   - component: {fileID: 5916811934475724932}
   - component: {fileID: 7272990412259183353}
@@ -77,18 +76,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09cacea09db091841bb421c9cdf7e688, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
---- !u!114 &1476624812090923839
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 511428767548883217}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6be4026112a116240b422386a7b23e0e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   gravity: -25
   wallDetectRange: 1.2
   fpsCamera: {fileID: 2114311784106306459}
