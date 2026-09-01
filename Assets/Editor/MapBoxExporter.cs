@@ -36,7 +36,8 @@ public class MapBoxExporter : EditorWindow
         sb.AppendLine("var MapWalls = []WallBox{");
         foreach (var b in boxes)
         {
-            sb.AppendFormat("\t{{ {0}f, {1}f, {2}f, {3}f, {4}f, {5}f }},\n",
+            // Go 浮点字面量无 f 后缀（float32 由常量自动转换）
+            sb.AppendFormat("\t{{ {0}, {1}, {2}, {3}, {4}, {5} }},\n",
                 F(b.center.x), F(b.center.y), F(b.center.z),
                 F(b.size.x), F(b.size.y), F(b.size.z));
         }
