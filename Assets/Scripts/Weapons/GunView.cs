@@ -90,6 +90,7 @@ public class GunView : MonoBehaviour
                 if (_gun.TryLockOn(out int lockShooter))
                 {
                     FireLockOn(lockShooter); // 锁头：自动锁定视野内最近目标（必中）
+                    NetworkClient.NotifyLockFired(); // 联机：上报锁头发射（服务端扣充能）
                     _flashTimer = 0.15f; // 锁头闪光更明显
                     _lastShooter = lockShooter;
                     _lockFlash = 0.6f;   // 锁头提示（枪口持续亮）
@@ -144,8 +145,8 @@ public class GunView : MonoBehaviour
         return false;
     }
 
-    // 锁头：自动锁定视野内（夹角 20°）离准心最近的目标 → 弹道指向目标 + 必中伤害
-    // 无目标 → 沿准星方向发射（现状）
+    // 锁头：自动锁定最近目标（60m——镜像服务端 ApplyLock）→ 弹道指向 + 标记
+    // 目标：单机靶子（HealthComponent）/ 联机敌人（RemotePlayer）
     private void FireLockOn(int shooter)
     {
         Transform muzzle = shooter == 0 ? muzzleBlack : muzzleWhite;
@@ -156,11 +157,13 @@ public class GunView : MonoBehaviour
         var target = FindNearestTarget();
         if (target != null)
         {
-            // 锁定：弹道指向目标中心，直接造成 50 伤害（必中，无视偏移）
-            Vector3 dir = (target.transform.position - from).normalized;
+            // 锁定：弹道指向目标中心（伤害由服务端裁决——单机直接结算）
+            Vector3 dir = (target.position - from).normalized;
             DrawShotVisual(from, dir, 60f, shooter);
-            DamageSystem.ApplyHit(target.Logic, GameConfig.LockOnDamage,
-                target.GetComponentInChildren<SwordView>()?.GetBlocker());
+            var hc = target.GetComponent<HealthComponent>();
+            if (hc != null) // 单机：直接结算（联机走服务端）
+                DamageSystem.ApplyHit(hc.Logic, GameConfig.LockOnDamage,
+                    target.GetComponentInChildren<SwordView>()?.GetBlocker());
             target.GetComponent<TargetIndicator>()?.ShowLocked(); // 目标头顶闪黄（锁定反馈）
             var hud = FindFirstObjectByType<HUD>();
             if (hud != null) hud.ShowLockFlash(); // 只在锁到人时提示 "LOCK!"
@@ -171,21 +174,37 @@ public class GunView : MonoBehaviour
         }
     }
 
-    // 视野内离准星最近的目标（排除玩家自身及后代；夹角 20° 内才算锁定）
-    private HealthComponent FindNearestTarget()
+    // 准星 20° 锥内最近可锁定目标（60m——镜像服务端；排除自己人）
+    private Transform FindNearestTarget()
     {
         const float maxAngle = 20f;
-        HealthComponent best = null;
+        Transform best = null;
         float bestAngle = maxAngle;
+        float bestDist = 60f;
+        // 单机：靶子（HealthComponent）
         foreach (var hc in FindObjectsByType<HealthComponent>(FindObjectsSortMode.None))
         {
             if (hc.transform.IsChildOf(transform)) continue; // 自己人
-            Vector3 toTarget = (hc.transform.position - _cam.transform.position).normalized;
-            float angle = Vector3.Angle(_cam.transform.forward, toTarget);
-            if (angle < bestAngle)
+            var to = hc.transform.position - _cam.transform.position;
+            float angle = Vector3.Angle(_cam.transform.forward, to);
+            if (angle < bestAngle && to.magnitude < bestDist)
             {
                 bestAngle = angle;
-                best = hc;
+                bestDist = to.magnitude;
+                best = hc.transform;
+            }
+        }
+        // 联机：敌方玩家（RemotePlayer——死亡隐藏中不可锁）
+        foreach (var rp in FindObjectsByType<RemotePlayer>(FindObjectsSortMode.None))
+        {
+            if (!rp.gameObject.activeSelf) continue;
+            var to = rp.transform.position - _cam.transform.position;
+            float angle = Vector3.Angle(_cam.transform.forward, to);
+            if (angle < bestAngle && to.magnitude < bestDist)
+            {
+                bestAngle = angle;
+                bestDist = to.magnitude;
+                best = rp.transform;
             }
         }
         return best;

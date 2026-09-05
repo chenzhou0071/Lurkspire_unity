@@ -22,6 +22,12 @@ public class Health
     }
 
     public void Reset() => HP = GameConfig.MaxHealth;
+
+    // 联机同步：服务端权威血量直接写入（不触发死亡流程——死亡由 Death 事件驱动）
+    public void SetHP(int hp)
+    {
+        HP = Mathf.Clamp(hp, 0, GameConfig.MaxHealth);
+    }
 }
 
 // DamageSystem — 命中入口（静态：射线/范围命中后调用）

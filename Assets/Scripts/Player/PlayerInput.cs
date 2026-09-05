@@ -23,6 +23,22 @@ public class PlayerInput : MonoBehaviour
     private bool _wallJumpActive;    // 跑墙跳状态：只有它触发同墙防吸回（二段跳可自由上墙）
     private bool _prevWallRunning;   // 上一帧跑墙状态（检测"刚掉墙"）
     private float _wallDropCooldown; // 掉墙冷却：超时掉墙后 0.5s 内禁上墙（防"掉-吸"循环）
+
+    // ---- 联机上报数据源（NetworkClient 读取——只读）----
+    public Vector2 NetMove { get; private set; }          // 移动方向
+    public bool NetW => Keyboard.current != null && Keyboard.current.wKey.isPressed;
+    public bool NetWallRunning => _wallRun.IsWallRunning; // 跑墙中（速度模式上报）
+    public bool NetSliding => _motor.IsSliding;
+    // 墙侧（联机动作码：1=墙在右身体左倾 2=墙在左身体右倾；0=非跑墙）
+    public int NetWallSide
+    {
+        get
+        {
+            if (!_wallRun.IsWallRunning) return 0;
+            float side = Vector3.Dot(_lastWallNormal, transform.right);
+            return side >= 0f ? 1 : 2;
+        }
+    }
     // 跑墙检测遮罩：排除 Boundary 层（边界墙挡人但不可跑墙）
     private static readonly int BoundaryLayer = 6; // 需在 Project Settings → Tags and Layers 建同名层
     private static readonly int WallMask = ~(1 << BoundaryLayer);
@@ -45,6 +61,7 @@ public class PlayerInput : MonoBehaviour
             if (kb.aKey.isPressed) move.x -= 1;
             if (kb.dKey.isPressed) move.x += 1;
         }
+        NetMove = move; // 联机上报数据源
 
         // ---- 滑铲（C 键点按启动，仅落地可用、跑墙中禁止——防空中/跑墙边界冲突） ----
         // 落地判断用射线兜底（_cc.isGrounded 落地滞后——会导致落地后按 C 无反应）

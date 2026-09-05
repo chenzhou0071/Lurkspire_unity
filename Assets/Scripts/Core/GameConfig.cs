@@ -29,9 +29,9 @@ public static class GameConfig
     public const int BlockGainOnHit = 20;      // 刀命中敌人 +20（抵两枪）
 
     // ---- 机动 ----
-    public const float RunSpeed = 16f;         // 快跑速度（手感阶段可调）
+    public const float RunSpeed = 14f;         // 快跑速度（整体手感基准——跑墙/滑铲按倍率跟随）
     public const float WallRunSeconds = 1.5f;  // 跑墙时长（超时掉墙；换墙/落地刷新）
-    public const float WallRunSpeedMult = 1.6f; // 跑墙沿墙速度倍率（快于跑步，加速机动）
+    public const float WallRunSpeedMult = 1.5f; // 跑墙沿墙速度倍率（快于跑步，加速机动）
     public const float SlideSpeedMult = 1.3f;  // 滑铲速度倍率（比跑步快）
     public const float SlideDuration = 0.8f;   // 滑铲时长
     public const float JumpHeight = 3f;        // 跳跃高度

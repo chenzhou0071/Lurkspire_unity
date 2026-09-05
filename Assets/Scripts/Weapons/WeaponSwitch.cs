@@ -16,6 +16,8 @@ public class WeaponSwitch : MonoBehaviour
         SetWeapon(1); // 开局双枪
     }
 
+    public int Current => _current; // 当前武器（1=枪 2=刀——网络上报用）
+
     private void Update()
     {
         // 后台充能/冷却：切刀后 GunView 禁用，充能仍每帧累计；切枪后 SwordView 禁用，冲刺冷却仍恢复

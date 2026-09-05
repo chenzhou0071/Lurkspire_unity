@@ -23,7 +23,11 @@ public class HUD : MonoBehaviour
         var canvasGO = new GameObject("HUDCanvas");
         var canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvasGO.AddComponent<CanvasScaler>();
+        // UI 随窗口自适应（参考 1280×720——窗口小 UI 也够大）
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1280, 720);
+        scaler.matchWidthOrHeight = 0.5f;
 
         // ---- 左下：HP / LOCK（3 格）/ DASH ----
         _hpBar = CreateBar(canvasGO.transform, "HPBar", new Color(0.85f, 0.2f, 0.2f, 0.55f), new Vector2(0, 0), new Vector2(16, 16));
